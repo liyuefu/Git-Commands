@@ -1,0 +1,8 @@
+shutdown immediate;
+startup mount;
+alter database archivelog;
+alter database force logging;
+alter database open;
+archive log list;
+select force_logging from v$database;
+exit;

@@ -1,0 +1,147 @@
+ref: 11g Steps to perform for Rolling Forward a Physical Standby Database using RMAN Incremental Backup. (Doc ID 836986.1)
+Steps to perform for Rolling forward a standby database using RMAN incremental backup when datafile is added to primary (Doc ID 1531031.1)
+
+步骤
+
+    源端log_archive_dest_state_2改为defer
+    源端运行插入数据,切换日志
+    目标端cancel
+    目标端查看current_scn
+    源端备份,4个channel并行备份
+    源端把备份复制到目标端
+    目标端catalog 这些文件
+    目标端recover database noredo
+    源端备份standby controlfile
+    源端把备份控制文件复制到目标端
+    目标端重启到nomount
+    目标端restore standby controlfile from ''
+    目标端把所有数据文件目录catalog , catalog start with '/u03/oradata/ctp';
+    目标端swtich datafile to copy
+    目标端clear redo ALTER DATABASE CLEAR LOGFILE GROUP 1;
+    目标端增加standby日志
+    目标端开启MRP自动恢复
+    源端设置archive_dest_state_2为enable
+
+命令
+
+
+alter system set log_archive_dest_state_2='defer';
+
+插入数据并切换日志的sql
+
+[oracle@pridb scripts]$ cat insert.sql 
+
+insert into nome.t1 values(10);
+
+commit;
+
+alter system switch logfile;
+
+exit;
+
+while true; do sqlplus / as sysdba @insert .sql; sleep 5; done;
+
+
+alter database recover managed standby database cancel;
+
+如果是在readonly模式,要重启到mount (shutdown immediate;  startup mount;)
+
+select current_scn from v$database;
+
+
+run{
+
+allocate channel ch00 device type disk;
+
+allocate channel ch01 device type disk;
+
+allocate channel ch02 device type disk;
+
+allocate channel ch03 device type disk;
+
+backup incremental from scn xxx database format '/tmp/forStandby_%U' tag 'FORSTANDBY';
+
+release channel ch00;
+
+release channel ch01;
+
+release channel ch02;
+
+release channel ch03;
+
+}
+
+scp /tmp/forStandby* 192.168.56.94:/tmp
+
+
+catalog start with '/tmp/forStandby';
+
+run
+
+{
+
+allocate channel ch00 device type disk;
+
+allocate channel ch01 device type disk;
+
+allocate channel ch02 device type disk;
+
+allocate channel ch03 device type disk;
+
+recover database noredo;
+
+release channel ch00;
+
+release channel ch01;
+
+release channel ch02;
+
+release channel ch03;
+
+}
+
+
+@b.cmd
+
+
+backup current controlfile for standby format '/tmp/forStandby_CTRL.bck';
+
+scp /tmp/forStandby_CTRL.bck 192.168.56.94:/tmp
+
+
+shutdown immediate;
+
+startup nomount
+
+restore controlfile from '/tmp/forStandby_CTRL.bck';
+
+shut immediate;
+
+startup mount;
+
+catalog start with '/u03/oradata/ctp';     (如果文件在多个目录,每个目录都要执行 catalog start with 'xxx')
+
+switch database to copy;
+
+
+alter database clear logfile group 1;
+
+alter database clear logfile group 2;
+
+alter database clear logfile group 3;
+
+host rm /u03/oradata/ctp/dg*.log;
+
+alter database add standby logfile thread 1  group 4 ('/u03/oradata/ctp/dg_redo_4.log') size 10M;
+
+alter database add standby logfile thread 1  group 5 ('/u03/oradata/ctp/dg_redo_5.log') size 10M;
+
+alter database add standby logfile thread 1  group 6 ('/u03/oradata/ctp/dg_redo_6.log') size 10M;
+
+alter database add standby logfile thread 1  group 7 ('/u03/oradata/ctp/dg_redo_7.log') size 10M;
+
+
+recover managed standby database using current logfile disconnect;
+
+
+alter system set log_archive_dest_state_2='enable';

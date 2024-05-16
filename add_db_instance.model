@@ -1,0 +1,3 @@
+srvctl add database -d DB_NAME -o ORACLE_HOME -r PHYSICAL_STANDBY -s mount
+srvctl add instance -d DB_NAME -i INSTANCE1 -n NODE1
+srvctl add instance -d DB_NAME -i INSTANCE2 -n NODE2
