@@ -7,16 +7,11 @@ export ORACLE_SID=`./getcfg.sh oracle_dg_sid`
 export DUPLICATE_ACTIVE=`./getcfg.sh duplicate_active`
 export LOG_FILE="/home/oracle/autodg/tmp/autodg_dg.log"
 
-
-
-msg_info "Standby startup listener..."
 $ORACLE_HOME/bin/lsnrctl stop listener_duplicate >/dev/null 2>&1
 $ORACLE_HOME/bin/lsnrctl start >/dev/null 2>&1
 msg_info "Standby wait 10 seconds to reocver..."
 sleep 10
-msg_info "Standby alter database open read only"
-msg_info "Standby alter database recover managed standby database..."
-msg_info "Standby select max sequence "
+msg_info "Standby alter database open read only,alter database recover managed standby database..."
 if [ $DUPLICATE_ACTIVE = "yes" ]; then
 $ORACLE_HOME/bin/sqlplus -s / as sysdba >> $LOG_FILE <<EOF
 select sequence#,applied from v\$archived_log;
