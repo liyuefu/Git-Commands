@@ -46,3 +46,12 @@ git help log(get more help of log)
 ## git branch bugfix
 git branch to check all the branches
 git switch bugfix , switch to another bransh.
+## git merge -m 'merge comment' bugfix
+git merge -m 'merge with bugfix in t2.sh' bugfix
+merge bugfix branch to master 
+## git branch -d bugfix
+after bugfix is merged, delete the bugfix branch.
+git branch to check it.
+
+## git switch -c newbranch
+create a new branch "newbranch" and switch to it.
