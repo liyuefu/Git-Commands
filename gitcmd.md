@@ -37,4 +37,12 @@ show the difference between old and new version.
 ## git restore 
 restore the old version(with new line)
 
-
+## git log
+check all the commits.
+git log --oneline
+show simple one line comments
+git log -p
+git help log(get more help of log)
+## git branch bugfix
+git branch to check all the branches
+git switch bugfix , switch to another bransh.
