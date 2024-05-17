@@ -11,4 +11,4 @@ file_exists '/etc/passwd' && echo "yes" || echo "no"
 
 #added comment for bugfix
 #
-#new line from master 
+#new line from UpdateText
